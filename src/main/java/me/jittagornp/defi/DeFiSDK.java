@@ -146,7 +146,7 @@ public class DeFiSDK implements DeFi {
                 .sendAsync();
         final CompletableFuture<BigDecimal> balanceOf = erc20.balanceOf(credentials.getAddress())
                 .sendAsync()
-                .thenApply(balance -> _fromWei(balance));
+                .thenApply(this::_fromWei);
         final CompletableFuture<BigDecimal> price = getTokenPrice(token, tokenPair, factory);
         final CompletableFuture<BigInteger> decimals = erc20.decimals()
                 .sendAsync();
@@ -206,7 +206,7 @@ public class DeFiSDK implements DeFi {
         return _loadContract(ERC20.class, token)
                 .balanceOf(credentials.getAddress())
                 .sendAsync()
-                .thenApply(balance -> _fromWei(balance));
+                .thenApply(this::_fromWei);
     }
 
     @Override
@@ -259,11 +259,10 @@ public class DeFiSDK implements DeFi {
 
     @Override
     public CompletableFuture<TransactionReceipt> tokenApprove(final String token, final BigDecimal amount, final String contractAddress) {
-        final BigInteger amountIn = _toWei(amount);
         return _sendTransaction(
                 token,
                 _loadContract(ERC20.class, token)
-                        .approve(contractAddress, amountIn)
+                        .approve(contractAddress, _toWei(amount))
                         .encodeFunctionCall(),
                 BigDecimal.ZERO,
                 "ERC20.approve(spender, amount)"
@@ -305,11 +304,11 @@ public class DeFiSDK implements DeFi {
         return _loadContract(ERC20.class, token)
                 .allowance(credentials.getAddress(), contractAddress)
                 .sendAsync()
-                .thenApply(allowance -> _fromWei(allowance));
+                .thenApply(this::_fromWei);
     }
 
     @Override
-    public CompletableFuture<TransactionReceipt> swapToken(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage, final int deadlineMinutes) {
+    public CompletableFuture<TransactionReceipt> tokenSwap(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage, final int deadlineMinutes) {
         return getTokenAllowance(tokenA, router)
                 .thenCompose(allowance -> {
                     log.info("Allowance Token \"{}\" amount {} for Contract \"{}\"", tokenA, allowance, router);
@@ -322,17 +321,17 @@ public class DeFiSDK implements DeFi {
     }
 
     @Override
-    public CompletableFuture<TransactionReceipt> swapToken(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage) {
-        return swapToken(router, tokenA, tokenB, amount, slippage, defaultSwapDeadlineMinutes);
+    public CompletableFuture<TransactionReceipt> tokenSwap(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage) {
+        return tokenSwap(router, tokenA, tokenB, amount, slippage, defaultSwapDeadlineMinutes);
     }
 
     @Override
-    public CompletableFuture<TransactionReceipt> swapToken(final String router, final String tokenA, final String tokenB, final BigDecimal amount) {
-        return swapToken(router, tokenA, tokenB, amount, defaultSwapSlippage);
+    public CompletableFuture<TransactionReceipt> tokenSwap(final String router, final String tokenA, final String tokenB, final BigDecimal amount) {
+        return tokenSwap(router, tokenA, tokenB, amount, defaultSwapSlippage);
     }
 
     @Override
-    public CompletableFuture<TransactionReceipt> swapTokenAndAutoApprove(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage, final int deadlineMinutes) {
+    public CompletableFuture<TransactionReceipt> tokenSwapAndAutoApprove(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage, final int deadlineMinutes) {
         return getTokenAllowance(tokenA, router)
                 .thenCompose(allowance -> {
                     log.info("Allowance Token \"{}\" amount {} for Contract \"{}\"", tokenA, allowance, router);
@@ -349,13 +348,13 @@ public class DeFiSDK implements DeFi {
     }
 
     @Override
-    public CompletableFuture<TransactionReceipt> swapTokenAndAutoApprove(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage) {
-        return swapTokenAndAutoApprove(router, tokenA, tokenB, amount, slippage, defaultSwapDeadlineMinutes);
+    public CompletableFuture<TransactionReceipt> tokenSwapAndAutoApprove(final String router, final String tokenA, final String tokenB, final BigDecimal amount, final double slippage) {
+        return tokenSwapAndAutoApprove(router, tokenA, tokenB, amount, slippage, defaultSwapDeadlineMinutes);
     }
 
     @Override
-    public CompletableFuture<TransactionReceipt> swapTokenAndAutoApprove(final String router, final String tokenA, final String tokenB, final BigDecimal amount) {
-        return swapTokenAndAutoApprove(router, tokenA, tokenB, amount, defaultSwapSlippage);
+    public CompletableFuture<TransactionReceipt> tokenSwapAndAutoApprove(final String router, final String tokenA, final String tokenB, final BigDecimal amount) {
+        return tokenSwapAndAutoApprove(router, tokenA, tokenB, amount, defaultSwapSlippage);
     }
 
     @Override
@@ -376,7 +375,7 @@ public class DeFiSDK implements DeFi {
     @Override
     public CompletableFuture<BigDecimal> getGasPrice() {
         return _getGasPrice()
-                .thenApply(gasPrice -> _fromGwei(gasPrice));
+                .thenApply(this::_fromGwei);
     }
 
     @Override
