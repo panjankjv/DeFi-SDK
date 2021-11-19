@@ -3,11 +3,16 @@
  */
 package me.jittagornp.defi;
 
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
 import me.jittagornp.defi.model.TokenInfo;
 import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -18,9 +23,60 @@ import java.util.function.Function;
  */
 public interface DeFi {
 
+    @Getter
     enum Network {
-        BSC_MAINNET,
-        POLYGON_MAINNET
+        BSC_MAINNET(
+                "Binance Smart Chain",
+                56L,
+                "https://bsc-dataseed.binance.org",
+                "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", //WBNB
+                "BNB",
+                "https://bscscan.com"
+        ),
+        POLYGON_MAINNET(
+                "Polygon (PoS) Chain",
+                137L,
+                "https://rpc-mainnet.maticvigil.com",
+                "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270", //WMATIC
+                "MATIC",
+                "https://polygonscan.com"
+        ),
+        BITKUB_MAINNET(
+                "Bitkub Chain",
+                96L,
+                "https://rpc.bitkubchain.io",
+                "0x67eBD850304c70d983B2d1b93ea79c7CD6c3F6b5", //KKUB
+                "KUB",
+                "https://bkcscan.com"
+        );
+
+        private final String name;
+
+        private final long chainId;
+
+        private final String rpcURL;
+
+        private final String gasWrappedToken;
+
+        private final String gasSymbol;
+
+        private final String explorerURL;
+
+        private Network(
+                final String name,
+                final long chainId,
+                final String rpcURL,
+                final String gasWrappedToken,
+                final String gasSymbol,
+                final String explorerURL
+        ) {
+            this.name = name;
+            this.chainId = chainId;
+            this.rpcURL = rpcURL;
+            this.gasWrappedToken = gasWrappedToken;
+            this.gasSymbol = gasSymbol;
+            this.explorerURL = explorerURL;
+        }
     }
 
     Network getNetwork();
@@ -73,11 +129,29 @@ public interface DeFi {
 
     CompletableFuture<TransactionReceipt> tokenSwapAndAutoApprove(final String swapRouter, final String tokenA, final String tokenB, final BigDecimal amount);
 
-    CompletableFuture<TransactionReceipt> fillGas(final String gasToken, final BigDecimal amount);
+    CompletableFuture<TransactionReceipt> fillGas(final BigDecimal amount);
 
-    CompletableFuture<TransactionReceipt> tokenSwapAndFillGas(final String swapRouter, final String token, final String gasToken, final BigDecimal amount);
+    CompletableFuture<TransactionReceipt> tokenSwapAndFillGas(final String swapRouter, final String token, final BigDecimal amount);
 
     void onBlock(final Consumer<EthBlock.Block> consumer, final long throttleMillisecond);
 
     void onBlock(final Consumer<EthBlock.Block> consumer);
+
+    void onTransfer(final String token, final Consumer<TransferEvent> consumer);
+
+    @Data
+    @Builder
+    class TransferEvent {
+
+        private String token;
+
+        private String from;
+
+        private String to;
+
+        private BigInteger value;
+
+        private Log log;
+
+    }
 }
